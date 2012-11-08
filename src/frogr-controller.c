@@ -32,6 +32,7 @@
 #include "frogr-file-loader.h"
 #include "frogr-global-defs.h"
 #include "frogr-main-view.h"
+#include "frogr-serializer.h"
 #include "frogr-settings-dialog.h"
 #include "frogr-util.h"
 
@@ -65,6 +66,7 @@ struct _FrogrControllerPrivate
 
   FrogrMainView *mainview;
   FrogrConfig *config;
+  FrogrSerializer *serializer;
   FrogrAccount *account;
 
   FspSession *session;
@@ -1995,6 +1997,12 @@ _frogr_controller_dispose (GObject* object)
       priv->config = NULL;
     }
 
+  if (priv->serializer)
+    {
+      g_object_unref (priv->serializer);
+      priv->serializer = NULL;
+    }
+
   if (priv->account)
     {
       g_object_unref (priv->account);
@@ -2062,6 +2070,9 @@ frogr_controller_init (FrogrController *self)
 
   priv->config = frogr_config_get_instance ();
   g_object_ref (priv->config);
+
+  priv->serializer = frogr_serializer_get_instance ();
+  g_object_ref (priv->serializer);
 
   priv->session = fsp_session_new (API_KEY, SHARED_SECRET, NULL);
   priv->cancellable = NULL;
@@ -2716,6 +2727,24 @@ frogr_controller_cancel_ongoing_request (FrogrController *self)
     }
 
   priv->cancellable = NULL;
+}
+
+void
+frogr_controller_save_current_session (FrogrController *self)
+{
+  FrogrControllerPrivate *priv = NULL;
+  FrogrMainViewModel *mainview_model = NULL;
+  GSList *pictures = NULL;
+
+  g_return_if_fail(FROGR_IS_CONTROLLER (self));
+
+  priv = FROGR_CONTROLLER_GET_PRIVATE (self);
+  mainview_model = frogr_main_view_get_model (priv->mainview);
+
+  if (frogr_main_view_model_n_pictures (mainview_model) > 0)
+    pictures = frogr_main_view_model_get_pictures_as_loaded (mainview_model);
+
+  frogr_serializer_save_current_session (priv->serializer, pictures);
 }
 
 #ifdef GTK_API_VERSION_3
