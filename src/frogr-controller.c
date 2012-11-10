@@ -211,7 +211,7 @@ static void _on_file_loaded (FrogrFileLoader *loader, FrogrPicture *picture, Fro
 
 static void _on_files_loaded (FrogrFileLoader *loader, FrogrController *self);
 
-static void _on_model_deserialized (FrogrMainViewModel *model, FrogrController *self);
+static void _on_model_deserialized (FrogrModel *model, FrogrController *self);
 
 static void _fetch_everything (FrogrController *self, gboolean force_fetch);
 
@@ -1297,9 +1297,9 @@ _complete_picture_upload_on_idle (gpointer data)
   if (!up_data->error)
     {
       /* Remove it from the model if no error happened */
-      FrogrMainViewModel *mainview_model = NULL;
-      mainview_model = frogr_main_view_get_model (priv->mainview);
-      frogr_main_view_model_remove_picture (mainview_model, picture);
+      FrogrModel *model = NULL;
+      model = frogr_main_view_get_model (priv->mainview);
+      frogr_model_remove_picture (model, picture);
     }
   else {
     up_data->current = NULL;
@@ -1318,15 +1318,15 @@ static void
 _on_file_loaded (FrogrFileLoader *loader, FrogrPicture *picture, FrogrController *self)
 {
   FrogrControllerPrivate *priv = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
 
   g_return_if_fail (FROGR_IS_CONTROLLER (self));
   g_return_if_fail (FROGR_IS_PICTURE (picture));
 
   priv = FROGR_CONTROLLER_GET_PRIVATE (self);
 
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  frogr_main_view_model_add_picture (mainview_model, picture);
+  model = frogr_main_view_get_model (priv->mainview);
+  frogr_model_add_picture (model, picture);
 }
 
 static void
@@ -1337,7 +1337,7 @@ _on_files_loaded (FrogrFileLoader *loader, FrogrController *self)
 }
 
 static void
-_on_model_deserialized (FrogrMainViewModel *model, FrogrController *self)
+_on_model_deserialized (FrogrModel *model, FrogrController *self)
 {
   g_return_if_fail (FROGR_IS_CONTROLLER (self));
   _set_state (self, FROGR_STATE_IDLE);
@@ -1394,7 +1394,7 @@ _fetch_photosets_cb (GObject *object, GAsyncResult *res, gpointer data)
   FspSession *session = NULL;
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   GSList *data_sets_list = NULL;
   GSList *sets_list = NULL;
   GError *error = NULL;
@@ -1444,8 +1444,8 @@ _fetch_photosets_cb (GObject *object, GAsyncResult *res, gpointer data)
     }
 
   /* Update main view's model */
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  frogr_main_view_model_set_remote_photosets (mainview_model, sets_list);
+  model = frogr_main_view_get_model (priv->mainview);
+  frogr_model_set_remote_photosets (model, sets_list);
 
   priv->fetching_photosets = FALSE;
 }
@@ -1474,7 +1474,7 @@ _fetch_groups_cb (GObject *object, GAsyncResult *res, gpointer data)
   FspSession *session = NULL;
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   GSList *data_groups_list = NULL;
   GSList *groups_list = NULL;
   GError *error = NULL;
@@ -1523,8 +1523,8 @@ _fetch_groups_cb (GObject *object, GAsyncResult *res, gpointer data)
     }
 
   /* Update main view's model */
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  frogr_main_view_model_set_groups (mainview_model, groups_list);
+  model = frogr_main_view_get_model (priv->mainview);
+  frogr_model_set_groups (model, groups_list);
 
   priv->fetching_groups = FALSE;
 }
@@ -1698,7 +1698,7 @@ _fetch_tags_cb (GObject *object, GAsyncResult *res, gpointer data)
   FspSession *session = NULL;
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   GSList *tags_list = NULL;
   GError *error = NULL;
 
@@ -1725,8 +1725,8 @@ _fetch_tags_cb (GObject *object, GAsyncResult *res, gpointer data)
     priv->tags_fetched = TRUE;
 
   /* Update main view's model */
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  frogr_main_view_model_set_remote_tags (mainview_model, tags_list);
+  model = frogr_main_view_get_model (priv->mainview);
+  frogr_model_set_remote_tags (model, tags_list);
 
   priv->fetching_tags = FALSE;
 }
@@ -1798,7 +1798,7 @@ _show_details_dialog_on_idle (GSList *pictures)
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
   FrogrMainView *mainview = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   GtkWindow *window = NULL;
   GSList *tags_list = NULL;
 
@@ -1812,8 +1812,8 @@ _show_details_dialog_on_idle (GSList *pictures)
 
   frogr_main_view_hide_progress (mainview);
 
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  tags_list = frogr_main_view_model_get_tags (mainview_model);
+  model = frogr_main_view_get_model (priv->mainview);
+  tags_list = frogr_model_get_tags (model);
 
   /* Sets already pre-fetched: show the dialog */
   window = frogr_main_view_get_window (priv->mainview);
@@ -1832,7 +1832,7 @@ _show_add_tags_dialog_on_idle (GSList *pictures)
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
   FrogrMainView *mainview = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   GtkWindow *window = NULL;
   GSList *tags_list = NULL;
 
@@ -1846,8 +1846,8 @@ _show_add_tags_dialog_on_idle (GSList *pictures)
 
   frogr_main_view_hide_progress (mainview);
 
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  tags_list = frogr_main_view_model_get_tags (mainview_model);
+  model = frogr_main_view_get_model (priv->mainview);
+  tags_list = frogr_model_get_tags (model);
 
   /* Sets already pre-fetched: show the dialog */
   window = frogr_main_view_get_window (priv->mainview);
@@ -1866,7 +1866,7 @@ _show_create_new_set_dialog_on_idle (GSList *pictures)
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
   FrogrMainView *mainview = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   GtkWindow *window = NULL;
   GSList *photosets = NULL;
 
@@ -1880,8 +1880,8 @@ _show_create_new_set_dialog_on_idle (GSList *pictures)
 
   frogr_main_view_hide_progress (mainview);
 
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  photosets = frogr_main_view_model_get_photosets (mainview_model);
+  model = frogr_main_view_get_model (priv->mainview);
+  photosets = frogr_model_get_photosets (model);
 
   window = frogr_main_view_get_window (priv->mainview);
   frogr_create_new_set_dialog_show (window, pictures, photosets);
@@ -1899,7 +1899,7 @@ _show_add_to_set_dialog_on_idle (GSList *pictures)
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
   FrogrMainView *mainview = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   GtkWindow *window = NULL;
   GSList *photosets = NULL;
 
@@ -1913,11 +1913,11 @@ _show_add_to_set_dialog_on_idle (GSList *pictures)
 
   frogr_main_view_hide_progress (mainview);
 
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  photosets = frogr_main_view_model_get_photosets (mainview_model);
+  model = frogr_main_view_get_model (priv->mainview);
+  photosets = frogr_model_get_photosets (model);
 
   window = frogr_main_view_get_window (priv->mainview);
-  if (frogr_main_view_model_n_photosets (mainview_model) > 0)
+  if (frogr_model_n_photosets (model) > 0)
     frogr_add_to_set_dialog_show (window, pictures, photosets);
   else if (priv->photosets_fetched)
     frogr_util_show_info_dialog (window, _("No sets found"));
@@ -1935,7 +1935,7 @@ _show_add_to_group_dialog_on_idle (GSList *pictures)
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
   FrogrMainView *mainview = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   GtkWindow *window = NULL;
   GSList *groups = NULL;
 
@@ -1949,11 +1949,11 @@ _show_add_to_group_dialog_on_idle (GSList *pictures)
 
   frogr_main_view_hide_progress (mainview);
 
-  mainview_model = frogr_main_view_get_model (priv->mainview);
-  groups = frogr_main_view_model_get_groups (mainview_model);
+  model = frogr_main_view_get_model (priv->mainview);
+  groups = frogr_model_get_groups (model);
 
   window = frogr_main_view_get_window (priv->mainview);
-  if (frogr_main_view_model_n_groups (mainview_model) > 0)
+  if (frogr_model_n_groups (model) > 0)
     frogr_add_to_group_dialog_show (window, pictures, groups);
   else if (priv->groups_fetched)
     frogr_util_show_info_dialog (window, _("No groups found"));
@@ -2147,8 +2147,8 @@ frogr_controller_get_main_view (FrogrController *self)
   return priv->mainview;
 }
 
-FrogrMainViewModel *
-frogr_controller_get_main_view_model (FrogrController *self)
+FrogrModel *
+frogr_controller_get_model (FrogrController *self)
 {
   FrogrControllerPrivate *priv = NULL;
 
@@ -2688,11 +2688,11 @@ frogr_controller_upload_pictures (FrogrController *self)
     }
   else
     {
-      FrogrMainViewModel *mainview_model = NULL;
+      FrogrModel *model = NULL;
       GSList *pictures = NULL;
 
-      mainview_model = frogr_main_view_get_model (priv->mainview);
-      pictures = frogr_main_view_model_get_pictures (mainview_model);
+      model = frogr_main_view_get_model (priv->mainview);
+      pictures = frogr_model_get_pictures (model);
       if (pictures)
         {
           UploadPicturesData *up_data = g_slice_new0 (UploadPicturesData);
@@ -2761,7 +2761,7 @@ frogr_controller_load_project_from_file (FrogrController *self, const gchar *pat
   else
     {
       FrogrControllerPrivate *priv = NULL;
-      FrogrMainViewModel *mainview_model = NULL;
+      FrogrModel *model = NULL;
       JsonNode *json_root = NULL;
 
       _set_state (self, FROGR_STATE_LOADING_PICTURES);
@@ -2773,11 +2773,11 @@ frogr_controller_load_project_from_file (FrogrController *self, const gchar *pat
         frogr_controller_cancel_ongoing_requests (self);
 
       /* Deserialize from the JSON data and update the model */
-      mainview_model = frogr_main_view_get_model (priv->mainview);
+      model = frogr_main_view_get_model (priv->mainview);
       json_root = json_parser_get_root (json_parser);
-      frogr_main_view_model_deserialize (mainview_model, json_root);
+      frogr_model_deserialize (model, json_root);
 
-      g_signal_connect (G_OBJECT (mainview_model), "model-deserialized",
+      g_signal_connect (G_OBJECT (model), "model-deserialized",
                         G_CALLBACK (_on_model_deserialized),
                         self);
     }
@@ -2789,7 +2789,7 @@ void
 frogr_controller_save_project_to_file (FrogrController *self, const gchar *path)
 {
   FrogrControllerPrivate *priv = NULL;
-  FrogrMainViewModel *mainview_model = NULL;
+  FrogrModel *model = NULL;
   JsonGenerator *json_gen = NULL;
   JsonNode *serialized_model = NULL;
   GError *error = NULL;
@@ -2797,9 +2797,9 @@ frogr_controller_save_project_to_file (FrogrController *self, const gchar *path)
   g_return_if_fail(FROGR_IS_CONTROLLER (self));
 
   priv = FROGR_CONTROLLER_GET_PRIVATE (self);
-  mainview_model = frogr_main_view_get_model (priv->mainview);
+  model = frogr_main_view_get_model (priv->mainview);
 
-  serialized_model = frogr_main_view_model_serialize (mainview_model);
+  serialized_model = frogr_model_serialize (model);
 
   /* Create a JsonGenerator using the JsonNode as root */
   json_gen = json_generator_new ();
