@@ -1394,7 +1394,6 @@ _fetch_photosets_cb (GObject *object, GAsyncResult *res, gpointer data)
   FspSession *session = NULL;
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
-  FrogrModel *model = NULL;
   GSList *data_sets_list = NULL;
   GSList *sets_list = NULL;
   GError *error = NULL;
@@ -1418,8 +1417,6 @@ _fetch_photosets_cb (GObject *object, GAsyncResult *res, gpointer data)
     }
   else
     {
-      priv->photosets_fetched = TRUE;
-
       if (data_sets_list)
         {
           GSList *item = NULL;
@@ -1428,24 +1425,29 @@ _fetch_photosets_cb (GObject *object, GAsyncResult *res, gpointer data)
           for (item = data_sets_list; item; item = g_slist_next (item))
             {
               current_data_set = FSP_DATA_PHOTO_SET (item->data);
-              current_set = frogr_photoset_new (current_data_set->id,
-                                                current_data_set->title,
-                                                current_data_set->description);
-              frogr_photoset_set_primary_photo_id (current_set, current_data_set->primary_photo_id);
-              frogr_photoset_set_n_photos (current_set, current_data_set->n_photos);
+              if (!priv->photosets_fetched)
+                {
+                  current_set = frogr_photoset_new (current_data_set->id,
+                                                    current_data_set->title,
+                                                    current_data_set->description);
+                  frogr_photoset_set_primary_photo_id (current_set, current_data_set->primary_photo_id);
+                  frogr_photoset_set_n_photos (current_set, current_data_set->n_photos);
 
-              sets_list = g_slist_append (sets_list, current_set);
-
+                  sets_list = g_slist_append (sets_list, current_set);
+                }
               fsp_data_free (FSP_DATA (current_data_set));
             }
 
           g_slist_free (data_sets_list);
         }
-    }
 
-  /* Update main view's model */
-  model = frogr_main_view_get_model (priv->mainview);
-  frogr_model_set_remote_photosets (model, sets_list);
+      if (!priv->photosets_fetched)
+        {
+          FrogrModel *model = frogr_main_view_get_model (priv->mainview);
+          frogr_model_set_remote_photosets (model, sets_list);
+        }
+      priv->photosets_fetched = TRUE;
+    }
 
   priv->fetching_photosets = FALSE;
 }
@@ -1474,7 +1476,6 @@ _fetch_groups_cb (GObject *object, GAsyncResult *res, gpointer data)
   FspSession *session = NULL;
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
-  FrogrModel *model = NULL;
   GSList *data_groups_list = NULL;
   GSList *groups_list = NULL;
   GError *error = NULL;
@@ -1498,8 +1499,6 @@ _fetch_groups_cb (GObject *object, GAsyncResult *res, gpointer data)
     }
   else
     {
-      priv->groups_fetched = TRUE;
-
       if (data_groups_list)
         {
           GSList *item = NULL;
@@ -1508,23 +1507,28 @@ _fetch_groups_cb (GObject *object, GAsyncResult *res, gpointer data)
           for (item = data_groups_list; item; item = g_slist_next (item))
             {
               data_group = FSP_DATA_GROUP (item->data);
-              current_group = frogr_group_new (data_group->id,
-                                               data_group->name,
-                                               data_group->privacy,
-                                               data_group->n_photos);
+              if (!priv->groups_fetched)
+                {
+                  current_group = frogr_group_new (data_group->id,
+                                                   data_group->name,
+                                                   data_group->privacy,
+                                                   data_group->n_photos);
 
-              groups_list = g_slist_append (groups_list, current_group);
-
+                  groups_list = g_slist_append (groups_list, current_group);
+                }
               fsp_data_free (FSP_DATA (data_group));
             }
 
           g_slist_free (data_groups_list);
         }
-    }
 
-  /* Update main view's model */
-  model = frogr_main_view_get_model (priv->mainview);
-  frogr_model_set_groups (model, groups_list);
+      if (!priv->groups_fetched)
+        {
+          FrogrModel *model = frogr_main_view_get_model (priv->mainview);
+          frogr_model_set_groups (model, groups_list);
+        }
+      priv->groups_fetched = TRUE;
+    }
 
   priv->fetching_groups = FALSE;
 }
@@ -1698,7 +1702,6 @@ _fetch_tags_cb (GObject *object, GAsyncResult *res, gpointer data)
   FspSession *session = NULL;
   FrogrController *controller = NULL;
   FrogrControllerPrivate *priv = NULL;
-  FrogrModel *model = NULL;
   GSList *tags_list = NULL;
   GError *error = NULL;
 
@@ -1722,11 +1725,19 @@ _fetch_tags_cb (GObject *object, GAsyncResult *res, gpointer data)
       g_error_free (error);
     }
   else
-    priv->tags_fetched = TRUE;
-
-  /* Update main view's model */
-  model = frogr_main_view_get_model (priv->mainview);
-  frogr_model_set_remote_tags (model, tags_list);
+    {
+      if (priv->tags_fetched)
+        {
+          g_slist_foreach (tags_list, (GFunc)g_free, NULL);
+          g_slist_free (tags_list);
+        }
+      else
+        {
+          FrogrModel *model = frogr_main_view_get_model (priv->mainview);
+          frogr_model_set_remote_tags (model, tags_list);
+        }
+      priv->tags_fetched = TRUE;
+    }
 
   priv->fetching_tags = FALSE;
 }
