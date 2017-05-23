@@ -91,3 +91,8 @@ subdir ('src')
 subdir ('data')
 subdir ('help')
 subdir ('po')
+
+
+# Post-installation trigger
+
+meson.add_install_script ('build-aux/post-install.sh')
