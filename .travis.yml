@@ -1,0 +1,26 @@
+sudo: false
+
+services:
+  - docker
+
+os:
+  - linux
+
+compiler:
+  - gcc
+
+language:
+  - c
+
+before_install:
+  - docker pull ubuntu:zesty
+
+before_script:
+  - echo FROM ubuntu:zesty > Dockerfile
+  - echo ADD . /root >> Dockerfile
+  - echo RUN apt-get -qq update >> Dockerfile
+  - echo RUN apt-get install -y gcc meson ninja-build libgtk-3-dev libglib2.0-dev libgstreamer1.0-dev libjson-glib-dev libsoup2.4-dev libxml2-dev libexif-dev yelp-tools libgcrypt20-dev desktop-file-utils >> Dockerfile
+  - docker build -t ubuntu:withgit .
+
+script:
+  - docker run ubuntu:withgit /bin/sh -c "cd /root && mkdir _build && meson _build . && ninja -C _build && ninja -C _build install"
