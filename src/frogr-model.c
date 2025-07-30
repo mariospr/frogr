@@ -98,6 +98,7 @@ _remove_local_photosets (FrogrModel *self)
 {
   FrogrPhotoSet *set = NULL;
   GSList *item = NULL;
+  const gchar *id = NULL;
 
   g_return_if_fail(FROGR_IS_MODEL (self));
 
@@ -105,10 +106,13 @@ _remove_local_photosets (FrogrModel *self)
     return;
 
   /* Remove from the hash table first */
-  for (item = self->remote_sets; item; item = g_slist_next (item))
+  for (item = self->local_sets; item; item = g_slist_next (item))
     {
       set = FROGR_PHOTOSET (item->data);
-      g_hash_table_remove (self->sets_table, frogr_photoset_get_local_id (set));
+      /* Local sets are indexed only by their local ID */
+      id = frogr_photoset_get_local_id (set);
+      if (id)
+        g_hash_table_remove (self->sets_table, id);
     }
 
   g_slist_free_full (self->local_sets, g_object_unref);
