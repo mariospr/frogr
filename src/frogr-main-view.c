@@ -764,8 +764,9 @@ _update_project_path (FrogrMainView *self, const gchar *path)
                                      G_FILE_QUERY_INFO_NONE,
                                      NULL,
                                      NULL);
-      if (file_info)
-        self->project_name = g_strdup (g_file_info_get_display_name (file_info));
+      self->project_name = file_info
+        ? g_strdup (g_file_info_get_display_name (file_info))
+        : g_path_get_basename (path);
 
       /* Get the base directory, in beautiful UTF-8 too */
       dir = g_file_get_parent (file);
