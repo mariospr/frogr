@@ -764,13 +764,14 @@ _update_project_path (FrogrMainView *self, const gchar *path)
                                      G_FILE_QUERY_INFO_NONE,
                                      NULL,
                                      NULL);
-      self->project_name = g_strdup (g_file_info_get_display_name (file_info));
+      if (file_info)
+        self->project_name = g_strdup (g_file_info_get_display_name (file_info));
 
       /* Get the base directory, in beautiful UTF-8 too */
       dir = g_file_get_parent (file);
-      dir_path = g_file_get_parse_name (dir);
+      dir_path = dir ? g_file_get_parse_name (dir) : NULL;
       home_dir = g_get_home_dir ();
-      if (g_str_has_prefix (dir_path, home_dir))
+      if (dir_path && g_str_has_prefix (dir_path, home_dir))
         {
           g_autofree gchar *tmp_path = NULL;
 
